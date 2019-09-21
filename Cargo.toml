@@ -1,0 +1,21 @@
+[package]
+name = "udp-dtls"
+version = "0.1.0"
+authors = ["Timon Post <https://github.com/TimonPost>"]
+edition = "2018"
+description = "DTLS abstraction ontop of UDP"
+repository = "https://github.com/TimonPost/udp-dtls"
+documentation = "https://docs.rs/udp-dtls/"
+license = "MIT"
+keywords = ["DTLS", "UDP", "connection", "openssl", "ssl"]
+exclude = ["target", "Cargo.lock"]
+readme = "README.md"
+
+[dependencies]
+openssl = "0.10.19"
+openssl-probe = "0.1.2"
+log = "0.4.6"
+bytes = "0.4.11"
+
+[features]
+vendored = ["openssl/vendored"]
