@@ -2,6 +2,7 @@ use std::io::{Error, Read, Result, Write};
 use std::net::{SocketAddr, UdpSocket};
 use std::result;
 
+/// Wrapper to read from and sent data to an remote UDP endpoint.
 #[derive(Debug)]
 pub struct UdpChannel {
     pub socket: UdpSocket,

@@ -2,10 +2,11 @@ use crate::{
     openssl::{init_trust, try_set_supported_protocols},
     DtlsConnectorBuilder, DtlsStream, Error, HandshakeError, Protocol,
 };
+use log::debug;
 use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode};
 use std::io;
 
-/// A builder for client-side DTLS-connections.
+/// Connector to an UDP endpoint secured with DTLS.
 #[derive(Clone)]
 pub struct DtlsConnector {
     connector: SslConnector,

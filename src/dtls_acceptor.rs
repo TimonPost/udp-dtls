@@ -3,8 +3,7 @@ use crate::{DtlsAcceptorBuilder, DtlsStream, HandshakeError, Identity, Protocol,
 use openssl::ssl::{SslAcceptor, SslMethod};
 use std::{io, result};
 
-/// A builder for `DtlsAcceptor`s.
-/// A builder for server-side DTLS connections.
+/// Acceptor for incoming UDP sessions secured with DTLS.
 #[derive(Clone)]
 pub struct DtlsAcceptor(pub SslAcceptor);
 
@@ -75,7 +74,7 @@ impl DtlsAcceptor {
     where
         S: io::Read + io::Write,
     {
-        let s = self.0.accept(stream)?;
-        Ok(DtlsStream(s))
+        let stream = self.0.accept(stream)?;
+        Ok(DtlsStream(stream))
     }
 }
