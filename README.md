@@ -7,4 +7,4 @@ The following features are supported
 - [x] Dtls Stream for sending receiving encrypted data over udp
 - [x] Shutdown connection
 - [x] Certificates
-- [ ] One connection multiple UDP connections. 
+- [ ] Multiple connections to one connection (server/client)
