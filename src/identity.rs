@@ -5,7 +5,7 @@ use openssl::pkcs12::{ParsedPkcs12, Pkcs12};
 ///
 /// An identity is an X509 certificate along with its corresponding private key and chain of certificates to a trusted
 /// root.
-pub struct Identity(pub ParsedPkcs12);
+pub struct Identity(ParsedPkcs12);
 
 impl Identity {
     /// Parses a DER-formatted PKCS #12 archive, using the specified password to decrypt the key.
@@ -28,6 +28,18 @@ impl Identity {
 
     /// Returns the X509 certificate from this identity.
     pub fn certificate(&self) -> Certificate {
-        Certificate(self.0.cert.clone())
+        Certificate::from(self.0.cert.clone())
+    }
+}
+
+impl From<ParsedPkcs12> for Identity {
+    fn from(pkcs_12: ParsedPkcs12) -> Self {
+        Identity(pkcs_12)
+    }
+}
+
+impl AsRef<ParsedPkcs12> for Identity {
+    fn as_ref(&self) -> &ParsedPkcs12 {
+        &self.0
     }
 }

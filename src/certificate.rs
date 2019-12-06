@@ -3,7 +3,7 @@ use openssl::{hash::MessageDigest, x509::X509};
 
 /// A wrapper type for an `X509` certificate.
 #[derive(Clone)]
-pub struct Certificate(pub X509);
+pub struct Certificate(X509);
 
 impl Certificate {
     /// Deserializes a DER-encoded X509 structure.
@@ -65,5 +65,17 @@ impl Certificate {
             bytes: digest.to_vec(),
             signature_algorithm,
         })
+    }
+}
+
+impl From<X509> for Certificate {
+    fn from(acceptor: X509) -> Self {
+        Certificate(acceptor)
+    }
+}
+
+impl AsRef<X509> for Certificate {
+    fn as_ref(&self) -> &X509 {
+        &self.0
     }
 }

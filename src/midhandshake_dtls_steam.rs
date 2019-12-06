@@ -3,7 +3,7 @@ use openssl::ssl::MidHandshakeSslStream;
 use std::{fmt, io};
 
 /// A DTLS stream which has been interrupted midway through the handshake process.
-pub struct MidHandshakeDtlsStream<S>(pub MidHandshakeSslStream<S>);
+pub struct MidHandshakeDtlsStream<S>(MidHandshakeSslStream<S>);
 
 impl<S> MidHandshakeDtlsStream<S> {
     /// Returns a shared reference to the inner stream.
@@ -19,7 +19,7 @@ impl<S> MidHandshakeDtlsStream<S> {
 
 impl<S> MidHandshakeDtlsStream<S>
 where
-    S: io::Read + io::Write,
+    S: io::Read + io::Write + fmt::Debug,
 {
     /// Restarts the handshake process.
     ///
@@ -37,7 +37,7 @@ where
     /// [`SSL_do_handshake`]: https://www.openssl.org/docs/manmaster/man3/SSL_do_handshake.html
     pub fn handshake(self) -> Result<DtlsStream<S>, HandshakeError<S>> {
         match self.0.handshake() {
-            Ok(s) => Ok(DtlsStream(s)),
+            Ok(s) => Ok(DtlsStream::from(s)),
             Err(e) => Err(e.into()),
         }
     }
@@ -49,5 +49,17 @@ where
 {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt::Debug::fmt(&self.0, fmt)
+    }
+}
+
+impl<S: fmt::Debug> AsRef<MidHandshakeSslStream<S>> for MidHandshakeDtlsStream<S> {
+    fn as_ref(&self) -> &MidHandshakeSslStream<S> {
+        &self.0
+    }
+}
+
+impl<S: fmt::Debug> From<MidHandshakeSslStream<S>> for MidHandshakeDtlsStream<S> {
+    fn from(stream: MidHandshakeSslStream<S>) -> Self {
+        MidHandshakeDtlsStream(stream)
     }
 }

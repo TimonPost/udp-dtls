@@ -1,5 +1,6 @@
 use crate::{Certificate, Error, SrtpProfile};
 use openssl::ssl;
+use openssl::ssl::SslStream;
 use std::{fmt, io};
 
 /// A stream managing a DTLS session.
@@ -8,7 +9,7 @@ use std::{fmt, io};
 /// and both the server and the client are ready for receiving and sending
 /// data. Bytes read from a `DtlsStream` are decrypted from `S` and bytes written
 /// to a `DtlsStream` are encrypted when passing through to `S`.
-pub struct DtlsStream<S>(pub ssl::SslStream<S>);
+pub struct DtlsStream<S>(ssl::SslStream<S>);
 
 impl<S: fmt::Debug> fmt::Debug for DtlsStream<S> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
@@ -76,7 +77,11 @@ impl<S: io::Read + io::Write> DtlsStream<S> {
     ///
     /// [`SSL_get_peer_certificate`]: https://www.openssl.org/docs/man1.1.0/ssl/SSL_get_peer_certificate.html
     pub fn peer_certificate(&self) -> Result<Option<Certificate>, Error> {
-        Ok(self.0.ssl().peer_certificate().map(Certificate))
+        Ok(self
+            .0
+            .ssl()
+            .peer_certificate()
+            .map(|c| Certificate::from(c)))
     }
 
     /// Shuts down the session.
@@ -117,5 +122,17 @@ impl<S: io::Read + io::Write> io::Write for DtlsStream<S> {
 
     fn flush(&mut self) -> io::Result<()> {
         self.0.flush()
+    }
+}
+
+impl<S: io::Read + io::Write> AsRef<SslStream<S>> for DtlsStream<S> {
+    fn as_ref(&self) -> &SslStream<S> {
+        &self.0
+    }
+}
+
+impl<S: io::Read + io::Write> From<SslStream<S>> for DtlsStream<S> {
+    fn from(stream: SslStream<S>) -> Self {
+        DtlsStream(stream)
     }
 }

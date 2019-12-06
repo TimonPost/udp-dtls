@@ -2,7 +2,7 @@ use openssl::{
     error::ErrorStack,
     ssl::{SslContextBuilder, SslOptions},
 };
-use std::sync::{Once, ONCE_INIT};
+use std::sync::Once;
 
 use crate::Protocol;
 
@@ -36,6 +36,6 @@ pub fn try_set_supported_protocols(
 }
 
 pub fn init_trust() {
-    static ONCE: Once = ONCE_INIT;
+    static ONCE: Once = Once::new();
     ONCE.call_once(|| openssl_probe::init_ssl_cert_env_vars());
 }

@@ -4,7 +4,7 @@ use crate::{
 };
 use log::debug;
 use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode};
-use std::io;
+use std::{fmt, io};
 
 /// Connector to an UDP endpoint secured with DTLS.
 #[derive(Clone)]
@@ -41,9 +41,11 @@ impl DtlsConnector {
         }
 
         if let Some(ref identity) = builder.identity {
-            connector.set_certificate(&(identity.0).cert)?;
-            connector.set_private_key(&(identity.0).pkey)?;
-            if let Some(ref chain) = (identity.0).chain {
+            let identity = identity.as_ref();
+
+            connector.set_certificate(&identity.cert)?;
+            connector.set_private_key(&identity.pkey)?;
+            if let Some(ref chain) = identity.chain {
                 for cert in chain.iter().rev() {
                     connector.add_extra_chain_cert(cert.to_owned())?;
                 }
@@ -53,13 +55,10 @@ impl DtlsConnector {
         try_set_supported_protocols(builder.min_protocol, builder.max_protocol, &mut connector)?;
 
         for cert in &builder.root_certificates {
-            if let Err(err) = connector.cert_store_mut().add_cert((cert.0).clone()) {
+            if let Err(err) = connector.cert_store_mut().add_cert((cert.as_ref()).clone()) {
                 debug!("add_cert error: {:?}", err);
             }
         }
-
-        #[cfg(target_os = "android")]
-        load_android_root_certs(&mut connector)?;
 
         Ok(DtlsConnector {
             connector: connector.build(),
@@ -95,7 +94,11 @@ impl DtlsConnector {
     ///
     /// The domain is ignored if both SNI and hostname verification are
     /// disabled.
-    pub fn connect<S>(&self, domain: &str, stream: S) -> Result<DtlsStream<S>, HandshakeError<S>>
+    pub fn connect<S: fmt::Debug>(
+        &self,
+        domain: &str,
+        stream: S,
+    ) -> Result<DtlsStream<S>, HandshakeError<S>>
     where
         S: io::Read + io::Write,
     {
@@ -108,7 +111,13 @@ impl DtlsConnector {
             ssl.set_verify(SslVerifyMode::NONE);
         }
 
-        let s = ssl.connect(domain, stream)?;
-        Ok(DtlsStream(s))
+        let stream = ssl.connect(domain, stream)?;
+        Ok(DtlsStream::from(stream))
+    }
+}
+
+impl AsRef<SslConnector> for DtlsConnector {
+    fn as_ref(&self) -> &SslConnector {
+        &self.connector
     }
 }

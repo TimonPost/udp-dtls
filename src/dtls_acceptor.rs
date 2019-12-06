@@ -1,11 +1,11 @@
 use crate::openssl::try_set_supported_protocols;
 use crate::{DtlsAcceptorBuilder, DtlsStream, HandshakeError, Identity, Protocol, Result};
 use openssl::ssl::{SslAcceptor, SslMethod};
-use std::{io, result};
+use std::{fmt, io, result};
 
 /// Acceptor for incoming UDP sessions secured with DTLS.
 #[derive(Clone)]
-pub struct DtlsAcceptor(pub SslAcceptor);
+pub struct DtlsAcceptor(SslAcceptor);
 
 impl DtlsAcceptor {
     /// Creates a `DtlsAcceptor` with default settings.
@@ -38,10 +38,12 @@ impl DtlsAcceptor {
             acceptor.set_tlsext_use_srtp(&srtp_line)?;
         }
 
-        acceptor.set_private_key(&(builder.identity.0).pkey)?;
-        acceptor.set_certificate(&(builder.identity.0).cert)?;
+        let identity = builder.identity.as_ref();
 
-        if let Some(ref chain) = (builder.identity.0).chain {
+        acceptor.set_private_key(&identity.pkey)?;
+        acceptor.set_certificate(&identity.cert)?;
+
+        if let Some(ref chain) = identity.chain {
             for cert in chain.iter().rev() {
                 acceptor.add_extra_chain_cert(cert.to_owned())?;
             }
@@ -70,11 +72,26 @@ impl DtlsAcceptor {
     /// the handshake, a `HandshakeError::WouldBlock` error will be returned
     /// which can be used to restart the handshake when the socket is ready
     /// again.
-    pub fn accept<S>(&self, stream: S) -> result::Result<DtlsStream<S>, HandshakeError<S>>
+    pub fn accept<S: fmt::Debug>(
+        &self,
+        stream: S,
+    ) -> result::Result<DtlsStream<S>, HandshakeError<S>>
     where
         S: io::Read + io::Write,
     {
         let stream = self.0.accept(stream)?;
-        Ok(DtlsStream(stream))
+        Ok(DtlsStream::from(stream))
+    }
+}
+
+impl From<SslAcceptor> for DtlsAcceptor {
+    fn from(acceptor: SslAcceptor) -> Self {
+        DtlsAcceptor(acceptor)
+    }
+}
+
+impl AsRef<SslAcceptor> for DtlsAcceptor {
+    fn as_ref(&self) -> &SslAcceptor {
+        &self.0
     }
 }

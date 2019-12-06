@@ -12,7 +12,7 @@ pub enum Error {
     ///
     /// [`Error`]: struct.Error.html
     Normal(ErrorStack),
-    /// An ssl error with the result of peer certificate verification.
+    /// An SLL error with the result of peer certificate verification.
     Ssl(ssl::Error, X509VerifyResult),
     /// Bad SRTP profile
     SrtpProfile(SrtpProfileError),
@@ -27,7 +27,7 @@ impl error::Error for Error {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Normal(ref e) => error::Error::source(e),
             Error::Ssl(ref e, _) => error::Error::source(e),
@@ -61,7 +61,7 @@ impl From<SrtpProfileError> for Error {
 
 /// An error that can occur during the handshake-process.
 #[derive(Debug)]
-pub enum HandshakeError<S> {
+pub enum HandshakeError<S: fmt::Debug> {
     /// An error occurred during the handshake process, see inner error for more information.
     Failure(Error),
 
@@ -74,7 +74,7 @@ pub enum HandshakeError<S> {
     WouldBlock(MidHandshakeDtlsStream<S>),
 }
 
-impl<S> From<ssl::HandshakeError<S>> for HandshakeError<S> {
+impl<S: fmt::Debug> From<ssl::HandshakeError<S>> for HandshakeError<S> {
     fn from(e: ssl::HandshakeError<S>) -> HandshakeError<S> {
         match e {
             ssl::HandshakeError::SetupFailure(e) => HandshakeError::Failure(e.into()),
@@ -83,13 +83,13 @@ impl<S> From<ssl::HandshakeError<S>> for HandshakeError<S> {
                 HandshakeError::Failure(Error::Ssl(e.into_error(), v))
             }
             ssl::HandshakeError::WouldBlock(s) => {
-                HandshakeError::WouldBlock(MidHandshakeDtlsStream(s))
+                HandshakeError::WouldBlock(MidHandshakeDtlsStream::from(s))
             }
         }
     }
 }
 
-impl<S> From<ErrorStack> for HandshakeError<S> {
+impl<S: fmt::Debug> From<ErrorStack> for HandshakeError<S> {
     fn from(e: ErrorStack) -> HandshakeError<S> {
         HandshakeError::Failure(e.into())
     }
@@ -107,7 +107,7 @@ impl error::Error for SrtpProfileError {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         None
     }
 }
