@@ -1,4 +1,4 @@
-use std::io::{Error, Read, Result, Write, ErrorKind};
+use std::io::{Error, ErrorKind, Read, Result, Write};
 use std::net::{SocketAddr, UdpSocket};
 use std::result;
 
@@ -19,7 +19,7 @@ impl Write for UdpChannel {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         if let Some(addr) = self.remote_addr {
             self.socket.send_to(buf, addr)
-        }else {
+        } else {
             Err(Error::new(ErrorKind::Other, "aaaa"))
         }
     }

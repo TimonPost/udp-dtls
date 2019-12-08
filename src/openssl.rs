@@ -5,9 +5,9 @@ use openssl::{
 use std::sync::Once;
 
 use crate::Protocol;
-use openssl::ssl::{SslStreamBuilder, SslMethod};
-use std::net::SocketAddr;
+use openssl::ssl::{SslMethod, SslStreamBuilder};
 use std::io::{Read, Write};
+use std::net::SocketAddr;
 
 /// Sets protocol version requirements for the given `SslContextBuilder`
 ///
@@ -43,7 +43,7 @@ pub fn init_trust() {
     ONCE.call_once(|| openssl_probe::init_ssl_cert_env_vars());
 }
 
-pub fn dtls_listen<S: Read + Write,> (stream: S) -> Option<SocketAddr> {
+pub fn dtls_listen<S: Read + Write>(stream: S) -> Option<SocketAddr> {
     let mut builder = SslContextBuilder::new(SslMethod::dtls()).unwrap();
     builder.set_options(SslOptions::COOKIE_EXCHANGE);
     let context = builder.build();
