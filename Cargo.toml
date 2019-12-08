@@ -12,7 +12,7 @@ exclude = ["target", "Cargo.lock"]
 readme = "README.md"
 
 [dependencies]
-openssl = "0.10.19"
+openssl = { version = "0.10.19", path = "../rust-openssl/openssl" }
 openssl-probe = "0.1.2"
 log = "0.4.6"
 bytes = "0.4.11"

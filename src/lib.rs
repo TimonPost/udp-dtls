@@ -28,3 +28,5 @@ pub use self::midhandshake_dtls_steam::MidHandshakeDtlsStream;
 pub use self::protocol::Protocol;
 pub use self::srtp_profile::SrtpProfile;
 pub use self::udp_channel::UdpChannel;
+
+pub use self::openssl::dtls_listen;

@@ -1,4 +1,4 @@
-use std::io::{Error, Read, Result, Write};
+use std::io::{Error, Read, Result, Write, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
 use std::result;
 
@@ -6,7 +6,7 @@ use std::result;
 #[derive(Debug)]
 pub struct UdpChannel {
     pub socket: UdpSocket,
-    pub remote_addr: SocketAddr,
+    pub remote_addr: Option<SocketAddr>,
 }
 
 impl Read for UdpChannel {
@@ -17,7 +17,11 @@ impl Read for UdpChannel {
 
 impl Write for UdpChannel {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
-        self.socket.send_to(buf, self.remote_addr)
+        if let Some(addr) = self.remote_addr {
+            self.socket.send_to(buf, addr)
+        }else {
+            Err(Error::new(ErrorKind::Other, "aaaa"))
+        }
     }
 
     fn flush(&mut self) -> result::Result<(), Error> {

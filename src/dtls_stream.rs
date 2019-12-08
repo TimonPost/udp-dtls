@@ -47,11 +47,6 @@ impl<S: io::Read + io::Write> DtlsStream<S> {
         }
     }
 
-    /// Returns a shared reference to the underlying stream.
-    pub fn get_ref(&self) -> &S {
-        self.0.get_ref()
-    }
-
     /// Returns a mutable reference to the inner stream.
     pub fn get_mut(&mut self) -> &mut S {
         self.0.get_mut()

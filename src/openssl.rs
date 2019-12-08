@@ -5,6 +5,9 @@ use openssl::{
 use std::sync::Once;
 
 use crate::Protocol;
+use openssl::ssl::{SslStreamBuilder, SslMethod};
+use std::net::SocketAddr;
+use std::io::{Read, Write};
 
 /// Sets protocol version requirements for the given `SslContextBuilder`
 ///
@@ -38,4 +41,33 @@ pub fn try_set_supported_protocols(
 pub fn init_trust() {
     static ONCE: Once = Once::new();
     ONCE.call_once(|| openssl_probe::init_ssl_cert_env_vars());
+}
+
+pub fn dtls_connect<S: Read + Write,> (stream: S) -> Option<SocketAddr> {
+
+    openssl::ctr
+
+    let mut builder = SslContextBuilder::new(SslMethod::dtls()).unwrap();
+    builder.set_options(SslOptions::COOKIE_EXCHANGE);
+    let context = builder.build();
+
+    let ssl = openssl::ssl::Ssl::new(&context).unwrap();
+    let mut stream = SslStreamBuilder::new(ssl, stream);
+
+    println!("Listening...");
+
+    return stream.dtls_listen().unwrap();
+}
+
+pub fn dtls_listen<S: Read + Write,> (stream: S) -> Option<SocketAddr> {
+    let mut builder = SslContextBuilder::new(SslMethod::dtls()).unwrap();
+    builder.set_options(SslOptions::COOKIE_EXCHANGE);
+    let context = builder.build();
+
+    let ssl = openssl::ssl::Ssl::new(&context).unwrap();
+    let mut stream = SslStreamBuilder::new(ssl, stream);
+
+    println!("Listening...");
+
+    return stream.dtls_listen().unwrap();
 }
