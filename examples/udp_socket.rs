@@ -10,7 +10,7 @@ use udp_dtls::{Certificate, DtlsAcceptor, DtlsConnector, Identity, SrtpProfile};
 use udp_dtls::{DtlsAcceptorBuilder, UdpChannel};
 
 fn main() {
-    dtls_listen();
+    multiple_connections();
 }
 
 pub fn server_client() {
@@ -94,6 +94,8 @@ pub fn multiple_connections() {
     let server = UdpSocket::bind("127.0.0.1:0").unwrap();
     let client = UdpSocket::bind("127.0.0.1:0").unwrap();
 
+    let server_addr = server.local_addr().unwrap();
+
     let server_channel = UdpChannel {
         socket: server,
         remote_addr: None,
@@ -101,7 +103,7 @@ pub fn multiple_connections() {
 
     let client_channel = UdpChannel {
         socket: client,
-        remote_addr: Some(server.local_addr().unwrap()),
+        remote_addr: Some(server_addr),
     };
 
     // start sending with client
@@ -110,18 +112,18 @@ pub fn multiple_connections() {
 
         let mut dtls_client = connector.connect("foobar.com", client_channel).unwrap();
 
-        while true {
-            let mut buf = [0; 5];
-
-            let buf = b"hello";
-            dtls_client.write_all(buf);
-
-            thread::sleep(Duration::from_millis(200));
-        }
+//        while true {
+//            let mut buf = [0; 5];
+//
+//            let buf = b"hello";
+//            dtls_client.write_all(buf);
+//
+//            thread::sleep(Duration::from_millis(200));
+//        }
     });
 
     // listen for incoming connections.
-    let result = udp_dtls::dtls_listen(server_channel);
+    let result = udp_dtls::dtls_listen(server_channel, identity);
 
     println!("New connection: {:?}", result);
 }
