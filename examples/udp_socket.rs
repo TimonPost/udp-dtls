@@ -112,14 +112,14 @@ pub fn multiple_connections() {
 
         let mut dtls_client = connector.connect("foobar.com", client_channel).unwrap();
 
-//        while true {
-//            let mut buf = [0; 5];
-//
-//            let buf = b"hello";
-//            dtls_client.write_all(buf);
-//
-//            thread::sleep(Duration::from_millis(200));
-//        }
+        //        while true {
+        //            let mut buf = [0; 5];
+        //
+        //            let buf = b"hello";
+        //            dtls_client.write_all(buf);
+        //
+        //            thread::sleep(Duration::from_millis(200));
+        //        }
     });
 
     // listen for incoming connections.
