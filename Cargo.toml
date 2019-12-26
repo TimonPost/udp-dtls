@@ -16,6 +16,13 @@ openssl = { version = "0.10.19", path = "../rust-openssl/openssl" }
 openssl-probe = "0.1.2"
 log = "0.4.6"
 bytes = "0.4.11"
+rand = "0.7.2"
+arrayvec = "0.5.1"
+constant_time_eq = "0.1.4"
+bitflags = "1.2.1"
+blake2 = "0.7"
+digest = "0.7"
+lazy_static = "1.4.0"
 
 [features]
 vendored = ["openssl/vendored"]

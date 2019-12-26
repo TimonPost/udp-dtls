@@ -14,6 +14,7 @@ mod openssl;
 mod protocol;
 mod srtp_profile;
 mod udp_channel;
+mod connection;
 
 pub use self::certificate::Certificate;
 pub use self::certificate_fingerprint::{CertificateFingerprint, SignatureAlgorithm};

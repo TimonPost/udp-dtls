@@ -103,14 +103,14 @@ pub fn multiple_connections() {
 
     let client_channel = UdpChannel {
         socket: client,
-        remote_addr: Some(server_addr),
+        remote_addr: Some(server_addr.clone()),
     };
 
     // start sending with client
     let guard = thread::spawn(move || {
         thread::sleep(Duration::from_millis(300));
 
-        let mut dtls_client = connector.connect("foobar.com", client_channel).unwrap();
+        let mut dtls_client = connector.connect("foobar.com", client_channel).expect("DTLS client connect");
 
         //        while true {
         //            let mut buf = [0; 5];
@@ -123,7 +123,6 @@ pub fn multiple_connections() {
     });
 
     // listen for incoming connections.
-    let result = udp_dtls::dtls_listen(server_channel, identity);
+    udp_dtls::dtls_listen(server_channel, server_addr, identity).expect("dtls listen");
 
-    println!("New connection: {:?}", result);
 }
