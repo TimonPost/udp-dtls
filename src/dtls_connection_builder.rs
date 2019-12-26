@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use crate::{Certificate, DtlsConnector, Identity, Protocol, Result, SrtpProfile};
 
 /// A builder for `DtlsConnector`s.
@@ -11,6 +12,7 @@ use crate::{Certificate, DtlsConnector, Identity, Protocol, Result, SrtpProfile}
 /// - Enabling Server Name Indication (SNI)
 pub struct DtlsConnectorBuilder {
     pub(crate) identity: Option<Identity>,
+    pub(crate) psk_identity: Option<(Bytes, Bytes)>,
     pub(crate) srtp_profiles: Vec<SrtpProfile>,
     pub(crate) min_protocol: Option<Protocol>,
     pub(crate) max_protocol: Option<Protocol>,
@@ -18,12 +20,26 @@ pub struct DtlsConnectorBuilder {
     pub(crate) accept_invalid_certs: bool,
     pub(crate) accept_invalid_hostnames: bool,
     pub(crate) use_sni: bool,
+    pub(crate) cipher_list: Vec<String>,
 }
 
 impl DtlsConnectorBuilder {
     /// Sets the identity to be used for client certificate authentication.
     pub fn identity(&mut self, identity: Identity) -> &mut DtlsConnectorBuilder {
         self.identity = Some(identity);
+        self.psk_identity = None;
+        self
+    }
+
+    /// Sets identity/key for client PSK authentication.
+    ///
+    /// Defaults to None
+    ///
+    /// # Hint
+    /// You should specify one of the PSK_* ciphers, i.e. PSK-AES128-CCM8
+    pub fn psk_identity(&mut self, identity: &[u8], psk: &[u8]) -> &mut DtlsConnectorBuilder {
+        self.psk_identity = Some((Bytes::from(identity), Bytes::from(psk)));
+        self.identity = None;
         self
     }
 
@@ -129,6 +145,12 @@ impl DtlsConnectorBuilder {
         accept_invalid_hostnames: bool,
     ) -> &mut DtlsConnectorBuilder {
         self.accept_invalid_hostnames = accept_invalid_hostnames;
+        self
+    }
+
+    /// Adds cipher name to the list of allowed ciphers.
+    pub fn add_cipher<C: Into<String>>(&mut self, cipher: C) -> &mut DtlsConnectorBuilder {
+        self.cipher_list.push(cipher.into());
         self
     }
 

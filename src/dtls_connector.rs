@@ -4,7 +4,8 @@ use crate::{
 };
 use log::debug;
 use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode};
-use std::{fmt, io};
+use openssl::error::ErrorStack;
+use std::{fmt, io, io::Write};
 
 /// Connector to an UDP endpoint secured with DTLS.
 #[derive(Clone)]
@@ -52,6 +53,26 @@ impl DtlsConnector {
             }
         }
 
+        if let Some((identity_, psk_)) = builder.psk_identity.clone() {
+            connector.set_psk_client_callback(move |_, _, mut identity, mut psk| {
+                if let Err(err) = identity.write_all(&identity_) {
+                    debug!("psk_client_callback error (identity): {:?}", err);
+                    return Err(ErrorStack::get());
+                }
+
+                if let Err(err) =  psk.write_all(&psk_) {
+                    debug!("psk_client_callback error (psk): {:?}", err);
+                    return Err(ErrorStack::get());
+                }
+
+                Ok(psk_.len())
+            });
+        }
+
+        if !builder.cipher_list.is_empty() {
+            connector.set_cipher_list(&builder.cipher_list.join(":"))?;
+        }
+
         try_set_supported_protocols(builder.min_protocol, builder.max_protocol, &mut connector)?;
 
         for cert in &builder.root_certificates {
@@ -72,6 +93,7 @@ impl DtlsConnector {
     pub fn builder() -> DtlsConnectorBuilder {
         DtlsConnectorBuilder {
             identity: None,
+            psk_identity: None,
             srtp_profiles: vec![],
             min_protocol: Some(Protocol::Dtlsv10),
             max_protocol: None,
@@ -79,6 +101,7 @@ impl DtlsConnector {
             use_sni: true,
             accept_invalid_certs: false,
             accept_invalid_hostnames: false,
+            cipher_list: vec![],
         }
     }
 
