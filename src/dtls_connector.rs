@@ -54,7 +54,6 @@ impl DtlsConnector {
                         }
                     }
                 },
-
                 ConnectorIdentity::Psk(identity_) => {
                     let identity_ = identity_.clone();
 

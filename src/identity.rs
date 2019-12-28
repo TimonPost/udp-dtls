@@ -60,6 +60,7 @@ impl PskIdentity {
         PskIdentity(Bytes::from(identity), Bytes::from(key))
     }
 }
+
 /// Possible identities for DTLS connector (client)
 pub enum ConnectorIdentity {
     Certificate(CertificateIdentity),
