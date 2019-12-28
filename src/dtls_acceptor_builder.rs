@@ -1,4 +1,4 @@
-use crate::{DtlsAcceptor, Identity, Protocol, Result, SrtpProfile};
+use crate::{DtlsAcceptor, CertificateIdentity, Protocol, Result, SrtpProfile};
 
 /// A builder for `DtlsAcceptor`s.
 /// With this builder you can configure the following DTLS properties:
@@ -6,7 +6,7 @@ use crate::{DtlsAcceptor, Identity, Protocol, Result, SrtpProfile};
 /// - Adding and enabling the the DTLS extension 'use_srtp'
 /// - Configuring min/max supported DTLS versions
 pub struct DtlsAcceptorBuilder {
-    pub(crate) identity: Identity,
+    pub(crate) identity: CertificateIdentity,
     pub(crate) srtp_profiles: Vec<SrtpProfile>,
     pub(crate) min_protocol: Option<Protocol>,
     pub(crate) max_protocol: Option<Protocol>,
