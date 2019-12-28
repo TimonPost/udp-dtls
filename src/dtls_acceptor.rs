@@ -1,5 +1,5 @@
 use crate::openssl::try_set_supported_protocols;
-use crate::{DtlsAcceptorBuilder, DtlsStream, HandshakeError, Identity, Protocol, Result};
+use crate::{DtlsAcceptorBuilder, DtlsStream, HandshakeError, CertificateIdentity, Protocol, Result};
 use openssl::ssl::{SslAcceptor, SslMethod};
 use std::{fmt, io, result};
 
@@ -11,7 +11,7 @@ impl DtlsAcceptor {
     /// Creates a `DtlsAcceptor` with default settings.
     ///
     /// The identity acts as the server's private key/certificate chain.
-    pub fn default(identity: Identity) -> Result<DtlsAcceptor> {
+    pub fn default(identity: CertificateIdentity) -> Result<DtlsAcceptor> {
         DtlsAcceptor::builder(identity).build()
     }
 
@@ -57,7 +57,7 @@ impl DtlsAcceptor {
     /// Returns a new builder for a `DtlsAcceptor`.
     ///
     /// The identity acts as the server's private key/certificate chain.
-    pub fn builder(identity: Identity) -> DtlsAcceptorBuilder {
+    pub fn builder(identity: CertificateIdentity) -> DtlsAcceptorBuilder {
         DtlsAcceptorBuilder {
             identity,
             srtp_profiles: vec![],

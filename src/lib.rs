@@ -23,7 +23,7 @@ pub use self::dtls_connection_builder::DtlsConnectorBuilder;
 pub use self::dtls_connector::DtlsConnector;
 pub use self::dtls_stream::DtlsStream;
 pub use self::error::{Error, HandshakeError, Result, SrtpProfileError};
-pub use self::identity::Identity;
+pub use self::identity::{ConnectorIdentity, CertificateIdentity, PskIdentity};
 pub use self::midhandshake_dtls_steam::MidHandshakeDtlsStream;
 pub use self::protocol::Protocol;
 pub use self::srtp_profile::SrtpProfile;

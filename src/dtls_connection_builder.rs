@@ -1,5 +1,5 @@
-use crate::{Certificate, DtlsConnector, Identity, Protocol, Result, SrtpProfile};
-
+use crate::{Certificate, DtlsConnector, ConnectorIdentity, Protocol, Result, SrtpProfile};
+ 
 /// A builder for `DtlsConnector`s.
 ///
 /// With this builder you can configure the following DTLS properties:
@@ -10,7 +10,7 @@ use crate::{Certificate, DtlsConnector, Identity, Protocol, Result, SrtpProfile}
 /// - Allowing invalid hostnames/certs for the connection
 /// - Enabling Server Name Indication (SNI)
 pub struct DtlsConnectorBuilder {
-    pub(crate) identity: Option<Identity>,
+    pub(crate) identity: Option<ConnectorIdentity>,
     pub(crate) srtp_profiles: Vec<SrtpProfile>,
     pub(crate) min_protocol: Option<Protocol>,
     pub(crate) max_protocol: Option<Protocol>,
@@ -18,11 +18,12 @@ pub struct DtlsConnectorBuilder {
     pub(crate) accept_invalid_certs: bool,
     pub(crate) accept_invalid_hostnames: bool,
     pub(crate) use_sni: bool,
+    pub(crate) cipher_list: Vec<String>,
 }
 
 impl DtlsConnectorBuilder {
     /// Sets the identity to be used for client certificate authentication.
-    pub fn identity(&mut self, identity: Identity) -> &mut DtlsConnectorBuilder {
+    pub fn identity(&mut self, identity: ConnectorIdentity) -> &mut DtlsConnectorBuilder {
         self.identity = Some(identity);
         self
     }
@@ -129,6 +130,12 @@ impl DtlsConnectorBuilder {
         accept_invalid_hostnames: bool,
     ) -> &mut DtlsConnectorBuilder {
         self.accept_invalid_hostnames = accept_invalid_hostnames;
+        self
+    }
+
+    /// Adds cipher name to the list of allowed ciphers.
+    pub fn add_cipher<C: Into<String>>(&mut self, cipher: C) -> &mut DtlsConnectorBuilder {
+        self.cipher_list.push(cipher.into());
         self
     }
 

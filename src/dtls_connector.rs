@@ -1,10 +1,11 @@
 use crate::{
     openssl::{init_trust, try_set_supported_protocols},
-    DtlsConnectorBuilder, DtlsStream, Error, HandshakeError, Protocol,
+    DtlsConnectorBuilder, DtlsStream, Error, HandshakeError, Protocol, ConnectorIdentity
 };
 use log::debug;
 use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode};
-use std::{fmt, io};
+use openssl::error::ErrorStack;
+use std::{fmt, io, io::Write};
 
 /// Connector to an UDP endpoint secured with DTLS.
 #[derive(Clone)]
@@ -41,15 +42,40 @@ impl DtlsConnector {
         }
 
         if let Some(ref identity) = builder.identity {
-            let identity = identity.as_ref();
+            match identity {
+                ConnectorIdentity::Certificate(identity) => {
+                    let identity = identity.as_ref();
 
-            connector.set_certificate(&identity.cert)?;
-            connector.set_private_key(&identity.pkey)?;
-            if let Some(ref chain) = identity.chain {
-                for cert in chain.iter().rev() {
-                    connector.add_extra_chain_cert(cert.to_owned())?;
+                    connector.set_certificate(&identity.cert)?;
+                    connector.set_private_key(&identity.pkey)?;
+                    if let Some(ref chain) = identity.chain {
+                        for cert in chain.iter().rev() {
+                            connector.add_extra_chain_cert(cert.to_owned())?;
+                        }
+                    }
+                },
+                ConnectorIdentity::Psk(identity_) => {
+                    let identity_ = identity_.clone();
+
+                    connector.set_psk_client_callback(move |_, _, mut identity, mut psk| {
+                        if let Err(err) = identity.write_all(&identity_.0) {
+                            debug!("psk_client_callback error (identity): {:?}", err);
+                            return Err(ErrorStack::get());
+                        }
+
+                        if let Err(err) =  psk.write_all(&identity_.1) {
+                            debug!("psk_client_callback error (psk): {:?}", err);
+                            return Err(ErrorStack::get());
+                        }
+
+                        Ok(identity_.1.len())
+                    });
                 }
             }
+        }
+
+        if !builder.cipher_list.is_empty() {
+            connector.set_cipher_list(&builder.cipher_list.join(":"))?;
         }
 
         try_set_supported_protocols(builder.min_protocol, builder.max_protocol, &mut connector)?;
@@ -79,6 +105,7 @@ impl DtlsConnector {
             use_sni: true,
             accept_invalid_certs: false,
             accept_invalid_hostnames: false,
+            cipher_list: vec![],
         }
     }
 
