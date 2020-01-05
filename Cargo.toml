@@ -16,6 +16,11 @@ openssl = "0.10.19"
 openssl-probe = "0.1.2"
 log = "0.4.6"
 bytes = "0.4.11"
+futures = {version = "0.3", optional = false}
+tokio = {version = "0.2", features = ["default", "udp"], optional = false}
+tokio-openssl = {version="0.4", optional=false}
 
 [features]
 vendored = ["openssl/vendored"]
+#async = ["futures", "tokio", "tokio-openssl"]
+

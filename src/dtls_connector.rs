@@ -1,11 +1,13 @@
 use crate::{
     openssl::{init_trust, try_set_supported_protocols},
-    DtlsConnectorBuilder, DtlsStream, Error, HandshakeError, Protocol, ConnectorIdentity
+    DtlsConnectorBuilder, SyncDtlsStream, Error, AsyncDtlsStream, Protocol, ConnectorIdentity
 };
 use log::debug;
-use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode};
+use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode, ConnectConfiguration, HandshakeError};
 use openssl::error::ErrorStack;
 use std::{fmt, io, io::Write};
+use tokio_openssl;
+use tokio::io::{AsyncRead, AsyncWrite};
 
 /// Connector to an UDP endpoint secured with DTLS.
 #[derive(Clone)]
@@ -21,7 +23,7 @@ impl DtlsConnector {
     ///
     /// The `DtlsConnector` will use the settings from the given builder.
     ///
-    /// The following propperties will be applied from the builder:
+    /// The following properties will be applied from the builder:
     /// - Sets minimal/maximal protocol version
     /// - Sets srtp profile by enabling the DTLS extension 'use_srtp'
     /// - Sets the certificate and private key
@@ -109,6 +111,20 @@ impl DtlsConnector {
         }
     }
 
+    fn configure(&self) -> Result<ConnectConfiguration, ErrorStack> {
+        let mut ssl = self
+            .connector
+            .configure()?
+            .use_server_name_indication(self.use_sni)
+            .verify_hostname(!self.accept_invalid_hostnames);
+
+        if self.accept_invalid_certs {
+            ssl.set_verify(SslVerifyMode::NONE);
+        }
+
+        Ok(ssl)
+    }
+
     /// Initiates a DTLS handshake.
     ///
     /// The provided domain will be used for both SNI and certificate hostname
@@ -125,22 +141,35 @@ impl DtlsConnector {
         &self,
         domain: &str,
         stream: S,
-    ) -> Result<DtlsStream<S>, HandshakeError<S>>
+    ) -> Result<SyncDtlsStream<S>, HandshakeError<S>>
     where
         S: io::Read + io::Write,
     {
-        let mut ssl = self
-            .connector
-            .configure()?
-            .use_server_name_indication(self.use_sni)
-            .verify_hostname(!self.accept_invalid_hostnames);
-        if self.accept_invalid_certs {
-            ssl.set_verify(SslVerifyMode::NONE);
-        }
+        let conf = self.configure()?;
+        let stream = conf.connect(domain, stream)?;
 
-        let stream = ssl.connect(domain, stream)?;
-        Ok(DtlsStream::from(stream))
+        Ok(SyncDtlsStream::from(stream))
     }
+
+    pub async fn async_connect<S: fmt::Debug>(
+        &self,
+        domain: &str,
+        stream: S,
+    ) -> Result<AsyncDtlsStream<S>, AsyncConnectError<S>>
+    where
+        S: AsyncRead + AsyncWrite + Unpin
+    {
+        let conf = self.configure().map_err(AsyncConnectError::ErrorStack)?;
+        let stream = tokio_openssl::connect(conf, domain, stream).await.map_err(AsyncConnectError::TokioOpenSsl)?;
+
+        Ok(AsyncDtlsStream::from(stream))
+    }
+}
+
+#[derive(Debug)]
+pub enum AsyncConnectError<S> {
+    ErrorStack(ErrorStack),
+    TokioOpenSsl(tokio_openssl::HandshakeError<S>)
 }
 
 impl AsRef<SslConnector> for DtlsConnector {

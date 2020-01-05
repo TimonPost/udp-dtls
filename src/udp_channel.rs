@@ -4,18 +4,20 @@ use std::result;
 
 /// Wrapper to read from and sent data to an remote UDP endpoint.
 #[derive(Debug)]
-pub struct UdpChannel {
-    pub socket: UdpSocket,
+pub struct UdpChannel<S> {
+    pub socket: S,
     pub remote_addr: SocketAddr,
 }
 
-impl Read for UdpChannel {
+pub type SyncUdpChannel = UdpChannel<UdpSocket>;
+
+impl Read for SyncUdpChannel {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         self.socket.recv(buf)
     }
 }
 
-impl Write for UdpChannel {
+impl Write for SyncUdpChannel {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         self.socket.send_to(buf, self.remote_addr)
     }

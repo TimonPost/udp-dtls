@@ -1,5 +1,5 @@
 use crate::openssl::try_set_supported_protocols;
-use crate::{DtlsAcceptorBuilder, DtlsStream, HandshakeError, CertificateIdentity, Protocol, Result};
+use crate::{DtlsAcceptorBuilder, SyncDtlsStream, HandshakeError, CertificateIdentity, Protocol, Result};
 use openssl::ssl::{SslAcceptor, SslMethod};
 use std::{fmt, io, result};
 
@@ -75,12 +75,12 @@ impl DtlsAcceptor {
     pub fn accept<S: fmt::Debug>(
         &self,
         stream: S,
-    ) -> result::Result<DtlsStream<S>, HandshakeError<S>>
+    ) -> result::Result<SyncDtlsStream<S>, HandshakeError<S>>
     where
         S: io::Read + io::Write,
     {
         let stream = self.0.accept(stream)?;
-        Ok(DtlsStream::from(stream))
+        Ok(SyncDtlsStream::from(stream))
     }
 }
 
