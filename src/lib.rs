@@ -15,7 +15,9 @@ mod protocol;
 mod srtp_profile;
 mod udp_channel;
 
+#[cfg(feature="async")]
 mod udp_channel_async;
+#[cfg(feature="async")]
 mod dtls_stream_async;
 
 pub use self::certificate::Certificate;
@@ -32,5 +34,7 @@ pub use self::protocol::Protocol;
 pub use self::srtp_profile::SrtpProfile;
 pub use self::udp_channel::{UdpChannel, SyncUdpChannel};
 
+#[cfg(feature="async")]
 pub use self::udp_channel_async::{AsyncUdpChannel};
+#[cfg(feature="async")]
 pub use self::dtls_stream_async::{AsyncDtlsStream};

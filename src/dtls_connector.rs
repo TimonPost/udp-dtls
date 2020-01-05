@@ -1,12 +1,17 @@
 use crate::{
     openssl::{init_trust, try_set_supported_protocols},
-    DtlsConnectorBuilder, SyncDtlsStream, Error, AsyncDtlsStream, Protocol, ConnectorIdentity
+    DtlsConnectorBuilder, SyncDtlsStream, Error, Protocol, ConnectorIdentity
 };
 use log::debug;
 use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode, ConnectConfiguration, HandshakeError};
 use openssl::error::ErrorStack;
 use std::{fmt, io, io::Write};
+
+#[cfg(feature="async")]
+use crate::AsyncDtlsStream;
+#[cfg(feature="async")]
 use tokio_openssl;
+#[cfg(feature="async")]
 use tokio::io::{AsyncRead, AsyncWrite};
 
 /// Connector to an UDP endpoint secured with DTLS.
@@ -151,6 +156,7 @@ impl DtlsConnector {
         Ok(SyncDtlsStream::from(stream))
     }
 
+    #[cfg(feature="async")]
     pub async fn async_connect<S: fmt::Debug>(
         &self,
         domain: &str,
@@ -166,6 +172,7 @@ impl DtlsConnector {
     }
 }
 
+#[cfg(feature="async")]
 #[derive(Debug)]
 pub enum AsyncConnectError<S> {
     ErrorStack(ErrorStack),
