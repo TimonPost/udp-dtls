@@ -18,6 +18,7 @@ impl CookieFactory {
     }
 
     pub(crate) fn generate(&self, conn: &ConnectionInfo, out: &mut [u8]) -> usize {
+        println!("Generating client cookie ...");
         let mac = self.generate_mac(conn);
         out[0..COOKIE_MAC_BYTES].copy_from_slice(&mac);
         COOKIE_MAC_BYTES
@@ -35,13 +36,6 @@ impl CookieFactory {
             },
         }
 
-        if conn.remote.ip().is_ipv4() {
-
-        }
-        else if conn.remote.ip().is_ipv6() {
-
-        }
-
         {
             let mut buf = [0; 2];
             BigEndian::write_u16(&mut buf, conn.remote.port());
@@ -52,11 +46,18 @@ impl CookieFactory {
         result
     }
 
+
+
     pub(crate) fn verify(&self, conn: &ConnectionInfo, cookie_data: &[u8]) -> bool {
+        println!("Verifying client cookie ...");
         let expected = self.generate_mac(conn);
-        if !constant_time_eq(cookie_data, &expected) {
+
+        // TODO: remove to_vec
+        if cookie_data.to_vec() == expected.to_vec() {
+            println!("Client cookie verified");
             return false;
         }
+        println!("Client cookie not verified");
         true
     }
 }

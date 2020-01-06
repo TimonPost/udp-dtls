@@ -92,13 +92,13 @@ pub fn multiple_connections() {
         .unwrap();
 
     let server = UdpSocket::bind("127.0.0.1:0").unwrap();
-    let client = UdpSocket::bind("127.0.0.1:0").unwrap();
+    let client = UdpSocket::bind("127.0.0.1:12345").unwrap();
 
     let server_addr = server.local_addr().unwrap();
 
     let server_channel = UdpChannel {
         socket: server,
-        remote_addr: None,
+        remote_addr: Some(client.local_addr().unwrap()),
     };
 
     let client_channel = UdpChannel {
@@ -123,6 +123,6 @@ pub fn multiple_connections() {
     });
 
     // listen for incoming connections.
-    udp_dtls::dtls_listen(server_channel, server_addr, identity).expect("dtls listen");
+    udp_dtls::dtls_listen(server_channel, server_addr, identity);
 
 }

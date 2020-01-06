@@ -61,10 +61,10 @@ const LOCAL_ID_LEN: usize = 8;
 const MAX_CID_SIZE: usize = 18;
 const MIN_CID_SIZE: usize = 4;
 
-pub fn dtls_connect(identity: Identity) {
+pub fn dtls_connect<S: Read + Write>(stream: S, identity: Identity) {
     let identity = identity.as_ref();
 
-    let mut builder = SslContextBuilder::new(SslMethod::dtls()).expect("Context uilder");
+    let mut builder = SslContextBuilder::new(SslMethod::dtls_client()).expect("Context uilder");
     builder.set_cipher_list("eNULL:!MD5");
     builder.set_private_key(&identity.pkey).expect("setting private key");
     builder.set_certificate(&identity.cert).expect("setting certificate");
@@ -73,25 +73,26 @@ pub fn dtls_connect(identity: Identity) {
     builder.set_read_ahead(true);
 
     let context = builder.build();
-    context.b
+
     let mut ssl = openssl::ssl::Ssl::new(&context).expect("building ssl");
 
-
-
+    ssl.connect(stream);
 }
 
 pub fn dtls_listen<S: Read + Write>(stream: S, addr: SocketAddr, identity: Identity) -> Option<SocketAddr> {
     let mut rng = OsRng::default();
     let local_id = ConnectionId::random(&mut rng, LOCAL_ID_LEN as u8);
     let remote_id = ConnectionId::random(&mut rng, MAX_CID_SIZE as u8);
+
     let listen_keys = ListenKeys::new(&mut rand::thread_rng());
     let mut factory = CookieFactory::new(listen_keys.cookie);
-
-    let mut builder = SslContextBuilder::new(SslMethod::dtls()).expect("Context uilder");
+    let mut builder = SslContextBuilder::new(SslMethod::dtls_server()).expect("Context uilder");
 
     /*
         CIPHER
     */
+
+    println!("Setting up cipher");
 
     let identity = identity.as_ref();
 
@@ -116,13 +117,18 @@ pub fn dtls_listen<S: Read + Write>(stream: S, addr: SocketAddr, identity: Ident
           COOKIE
     */
 
+    println!("Setting up server context.");
+
     let factory1 = factory.clone();
     builder.set_cookie_generate_cb(move |dtls, buf| {
+        println!("Cookie generate callback");
         let conn = dtls.ex_data(*CONNECTION_INFO_INDEX).expect("no ex data");
+
         Ok(factory1.generate(conn, buf))
     });
 
     builder.set_cookie_verify_cb(move |dtls, cookie| {
+        println!("Set cookie verify callback");
         let conn = dtls.ex_data(*CONNECTION_INFO_INDEX).expect("no ex data exists");
         factory.verify(conn, cookie)
     });
@@ -130,12 +136,13 @@ pub fn dtls_listen<S: Read + Write>(stream: S, addr: SocketAddr, identity: Ident
     builder.set_options(SslOptions::COOKIE_EXCHANGE);
     builder.set_session_id_context(&[0, 1, 2, 3, 4]).expect("set session id");
 
-    try_set_supported_protocols(Some(Protocol::Dtlsv10), None, &mut builder).expect("set supported protocols");
+    try_set_supported_protocols(Some(Protocol::Dtlsv12), None, &mut builder).expect("set supported protocols");
 
     /*
       BUILDING
     */
 
+    println!("Building server context");
 
     let context = builder.build();
 
@@ -143,11 +150,15 @@ pub fn dtls_listen<S: Read + Write>(stream: S, addr: SocketAddr, identity: Ident
 
     ssl.set_ex_data(*CONNECTION_INFO_INDEX, ConnectionInfo { id: local_id.clone(), remote: addr });
 
-
     let mut stream = SslStreamBuilder::new(ssl, stream);
     stream.set_dtls_mtu_size(1500);
 
-    return stream.dtls_listen().expect("listen");
+    println!("Listening ...");
+    let a = stream.dtls_listen().expect("listen");
+
+    println!("New connection: {:?}", a);
+
+    None
 }
 
 
