@@ -35,6 +35,8 @@ pub use self::srtp_profile::SrtpProfile;
 pub use self::udp_channel::{UdpChannel, SyncUdpChannel};
 
 #[cfg(feature="async")]
+pub use self::error::{AsyncConnectError};
+#[cfg(feature="async")]
 pub use self::udp_channel_async::{AsyncUdpChannel};
 #[cfg(feature="async")]
 pub use self::dtls_stream_async::{AsyncDtlsStream};

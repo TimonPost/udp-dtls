@@ -8,7 +8,7 @@ use openssl::error::ErrorStack;
 use std::{fmt, io, io::Write};
 
 #[cfg(feature="async")]
-use crate::AsyncDtlsStream;
+use crate::{AsyncDtlsStream, AsyncConnectError};
 #[cfg(feature="async")]
 use tokio_openssl;
 #[cfg(feature="async")]
@@ -170,13 +170,6 @@ impl DtlsConnector {
 
         Ok(AsyncDtlsStream::from(stream))
     }
-}
-
-#[cfg(feature="async")]
-#[derive(Debug)]
-pub enum AsyncConnectError<S> {
-    ErrorStack(ErrorStack),
-    TokioOpenSsl(tokio_openssl::HandshakeError<S>)
 }
 
 impl AsRef<SslConnector> for DtlsConnector {
