@@ -1,6 +1,6 @@
  [![Latest Version][s1]][l1] [![MIT][s2]][l2] [![docs][s3]][l3] 
 
-This library is an DTLS opensll abstraction that can be used with `std::net::UdpSocket`. 
+This library is an DTLS openssl abstraction that can be used with `std::net::UdpSocket`. 
 In order to use this library, install openssl.
 
 The following features are supported:
