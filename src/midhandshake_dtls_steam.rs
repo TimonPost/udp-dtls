@@ -1,5 +1,5 @@
-use crate::{DtlsStream, HandshakeError};
-use openssl::ssl::MidHandshakeSslStream;
+use crate::{SyncDtlsStream, HandshakeError};
+use openssl::ssl::{MidHandshakeSslStream};
 use std::{fmt, io};
 
 /// A DTLS stream which has been interrupted midway through the handshake process.
@@ -35,9 +35,9 @@ where
     /// This corresponds to [`SSL_do_handshake`].
     ///
     /// [`SSL_do_handshake`]: https://www.openssl.org/docs/manmaster/man3/SSL_do_handshake.html
-    pub fn handshake(self) -> Result<DtlsStream<S>, HandshakeError<S>> {
+    pub fn handshake(self) -> Result<SyncDtlsStream<S>, HandshakeError<S>> {
         match self.0.handshake() {
-            Ok(s) => Ok(DtlsStream::from(s)),
+            Ok(s) => Ok(SyncDtlsStream::from(s)),
             Err(e) => Err(e.into()),
         }
     }

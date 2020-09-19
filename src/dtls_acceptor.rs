@@ -1,7 +1,14 @@
 use crate::openssl::try_set_supported_protocols;
-use crate::{DtlsAcceptorBuilder, DtlsStream, HandshakeError, CertificateIdentity, Protocol, Result};
+use crate::{DtlsAcceptorBuilder, SyncDtlsStream, HandshakeError, CertificateIdentity, Protocol, Result};
 use openssl::ssl::{SslAcceptor, SslMethod};
 use std::{fmt, io, result};
+
+#[cfg(feature="async")]
+use crate::{AsyncDtlsStream, AsyncConnectError};
+#[cfg(feature="async")]
+use tokio_openssl;
+#[cfg(feature="async")]
+use tokio::io::{AsyncRead, AsyncWrite};
 
 /// Acceptor for incoming UDP sessions secured with DTLS.
 #[derive(Clone)]
@@ -75,12 +82,25 @@ impl DtlsAcceptor {
     pub fn accept<S: fmt::Debug>(
         &self,
         stream: S,
-    ) -> result::Result<DtlsStream<S>, HandshakeError<S>>
+    ) -> result::Result<SyncDtlsStream<S>, HandshakeError<S>>
     where
         S: io::Read + io::Write,
     {
         let stream = self.0.accept(stream)?;
-        Ok(DtlsStream::from(stream))
+        Ok(SyncDtlsStream::from(stream))
+    }
+
+    #[cfg(feature="async")]
+    pub async fn async_accept<S: fmt::Debug>(
+        &self,
+        stream: S
+    ) -> std::result::Result<AsyncDtlsStream<S>, AsyncConnectError<S>>
+    where
+        S: AsyncRead + AsyncWrite + Unpin
+    {
+        let stream = tokio_openssl::accept(&self.0, stream).await.map_err(AsyncConnectError::TokioOpenSsl)?;
+
+        Ok(AsyncDtlsStream::from(stream))
     }
 }
 

@@ -133,3 +133,10 @@ impl FromStr for SrtpProfile {
         }
     }
 }
+ 
+#[cfg(feature="async")]
+#[derive(Debug)]
+pub enum AsyncConnectError<S> {
+    ErrorStack(ErrorStack),
+    TokioOpenSsl(tokio_openssl::HandshakeError<S>)
+}
